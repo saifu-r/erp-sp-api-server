@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('roles', RoleController::class);
     Route::post('/roles/{role}/permissions', [RoleController::class, 'syncPermissions']);
     Route::get('/permissions', [RoleController::class, 'allPermissions']);
+    Route::get('/permissions-list', [RoleController::class, 'paginatedList']);  
 
     Route::apiResource('users', UserController::class);
 });
