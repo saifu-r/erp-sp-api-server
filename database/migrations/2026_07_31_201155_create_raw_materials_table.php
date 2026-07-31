@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('statuses', function (Blueprint $table) {
+        Schema::create('raw_materials', function (Blueprint $table) {
             $table->id();
-            $table->string('group');      // e.g. 'general', 'payment', 'order'
-            $table->unsignedTinyInteger('code'); // the actual stored value, e.g. 0, 1, 2
-            $table->string('label');      // e.g. 'Active', 'Pending'
             $table->timestamps();
-            $table->unique(['group', 'code']);
         });
     }
 
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('raw_materials');
     }
 };

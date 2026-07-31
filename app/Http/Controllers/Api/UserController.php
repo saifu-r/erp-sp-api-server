@@ -35,6 +35,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'status' => 'required|integer|in:0,1,2',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
@@ -46,6 +47,7 @@ class UserController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'status' => $data['status'],
         ]);
 
         if (!empty($data['role_ids'])) {
@@ -58,6 +60,7 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
+            'status' => 'required|integer|in:0,1,2',
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'nullable|string|min:6',
@@ -67,6 +70,7 @@ class UserController extends Controller
 
         $user->name = $data['name'];
         $user->email = $data['email'];
+        $user->status = $data['status'];
         if (!empty($data['password'])) {
             $user->password = Hash::make($data['password']);
         }

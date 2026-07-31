@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -24,7 +25,15 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('bondhu-erp')->plainTextToken;
+        if ($user->status !== 1) {
+            throw ValidationException::withMessages([
+                'email' => ['This account is inactive. Please contact your administrator.'],
+            ]);
+        }
+
+        // $token = $user->createToken('bondhu-erp')->plainTextToken;
+        $token = $user->createToken('shanta-plastics-erp')->plainTextToken;
+
 
         return response()->json([
             'user' => [
