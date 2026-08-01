@@ -13,11 +13,19 @@ class PermissionSeeder extends Seeder
         $modules = [
             'sales' => ['customer', 'quotation', 'order', 'invoice', 'payment'],
             'inventory' => ['stock-adjustment'],
-            'manufacturing' => ['making-house', 'items', 'productions', 'stock-adjustment'],
+            'manufacturing' => [
+                'making-house',
+                'items',
+                'productions',
+                'stock-adjustment',
+                'raw-material',
+                'raw-material-purchase',
+                'raw-material-transfer'
+            ],
             'delivery' => ['delivery-note'],
-            'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement'],
             'hrm' => ['employees', 'attendance', 'payroll'],
             'admin' => ['user', 'role'],
+            'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement', 'balance-sheet', 'expense-type', 'expense'],
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
