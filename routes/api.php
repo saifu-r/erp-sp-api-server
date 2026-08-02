@@ -20,6 +20,9 @@ use App\Http\Controllers\Api\Accounts\AccountController;
 use App\Http\Controllers\Api\Accounts\JournalController;
 use App\Http\Controllers\Api\Accounts\ReportController;
 
+use App\Http\Controllers\Api\Purchase\SupplierController;
+use App\Http\Controllers\Api\Purchase\PurchaseController;
+
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
@@ -71,5 +74,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/trial-balance', [ReportController::class, 'trialBalance'])->middleware('permission:accounts.trial-balance.view');
     Route::get('/reports/income-statement', [ReportController::class, 'incomeStatement'])->middleware('permission:accounts.income-statement.view');
     Route::get('/reports/balance-sheet', [ReportController::class, 'balanceSheet'])->middleware('permission:accounts.balance-sheet.view');
-    });
+
+    Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:purchase.supplier.view');
+    Route::get('/suppliers/all', [SupplierController::class, 'all'])->middleware('permission:purchase.supplier.view');
+    Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('permission:purchase.supplier.create');
+    Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('permission:purchase.supplier.edit');
+    Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:purchase.supplier.delete');
+
+    Route::get('/purchases', [PurchaseController::class, 'index'])->middleware('permission:purchase.purchase.view');
+    Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchase.purchase.view');
+    Route::post('/purchases', [PurchaseController::class, 'store'])->middleware('permission:purchase.purchase.create');
+    Route::post('/purchases/{purchase}/payments', [PurchaseController::class, 'recordPayment'])->middleware('permission:purchase.purchase-payment.create');
+});
 // });

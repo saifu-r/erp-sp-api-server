@@ -26,6 +26,7 @@ class PermissionSeeder extends Seeder
             'hrm' => ['employees', 'attendance', 'payroll'],
             'admin' => ['user', 'role'],
             'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement', 'balance-sheet', 'expense-type', 'expense'],
+            'purchase' => ['supplier', 'purchase', 'purchase-payment'],
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
