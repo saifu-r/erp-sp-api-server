@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Purchase;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\TransactionPayment;
 use App\Services\PurchaseService;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,16 @@ class PurchaseController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('reference_no', 'like', "%{$search}%")
-                  ->orWhereHas('supplier', fn($sq) => $sq->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('supplier', fn($sq) => $sq->where('name', 'like', "%{$search}%"));
             });
+        }
+
+        if ($supplierId = $request->query('supplier_id')) {
+            $query->where('supplier_id', $supplierId);
+        }
+
+        if ($request->query('unpaid_only') === '1') {
+            $query->whereIn('payment_status', [1, 2]); // Pending or Partial only
         }
 
         $limit = (int) $request->query('limit', 20);
@@ -73,9 +82,49 @@ class PurchaseController extends Controller
         }
 
         $transaction = $this->purchaseService->recordPayment(
-            $purchase, $data['amount'], $data['date'], $data['method'] ?? null, $data['note'] ?? null
+            $purchase,
+            $data['amount'],
+            $data['date'],
+            $data['method'] ?? null,
+            $data['note'] ?? null
         );
 
         return response()->json($transaction, 201);
+    }
+
+    public function payments(Request $request)
+    {
+        $query = TransactionPayment::with(['transaction.supplier'])
+            ->whereHas('transaction', fn($q) => $q->where('type', 'purchase'));
+
+        if ($supplierId = $request->query('supplier_id')) {
+            $query->whereHas('transaction', fn($q) => $q->where('supplier_id', $supplierId));
+        }
+
+        if ($search = $request->query('search')) {
+            $query->whereHas('transaction', function ($q) use ($search) {
+                $q->where('reference_no', 'like', "%{$search}%")
+                    ->orWhereHas('supplier', fn($sq) => $sq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $limit = (int) $request->query('limit', 20);
+        $page = (int) $request->query('page', 1);
+        $orderBy = strtolower($request->query('orderBy', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $total = $query->count();
+        $payments = $query->orderBy('date', $orderBy)->skip(($page - 1) * $limit)->take($limit)->get();
+
+        $data = $payments->map(fn($p) => [
+            'id' => $p->id,
+            'date' => $p->date,
+            'amount' => $p->amount,
+            'method' => $p->method,
+            'note' => $p->note,
+            'reference_no' => $p->transaction->reference_no,
+            'supplier_name' => $p->transaction->supplier->name ?? '—',
+        ]);
+
+        return response()->json(['data' => $data, 'total' => $total]);
     }
 }

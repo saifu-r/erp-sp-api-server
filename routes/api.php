@@ -85,5 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->middleware('permission:purchase.purchase.view');
     Route::post('/purchases', [PurchaseController::class, 'store'])->middleware('permission:purchase.purchase.create');
     Route::post('/purchases/{purchase}/payments', [PurchaseController::class, 'recordPayment'])->middleware('permission:purchase.purchase-payment.create');
-});
+    Route::get('/payments', [PurchaseController::class, 'payments'])->middleware('permission:purchase.purchase-payment.view');
+    Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->middleware('permission:accounts.expense.view');
+    });
 // });

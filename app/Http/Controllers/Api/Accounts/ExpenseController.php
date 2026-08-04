@@ -61,4 +61,9 @@ class ExpenseController extends Controller
         $expense->delete();
         return response()->json(['message' => 'Deleted']);
     }
+
+    public function show(Expense $expense)
+    {
+        return $expense->load(['expenseType', 'paidFromAccount']);
+    }
 }
