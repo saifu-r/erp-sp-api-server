@@ -22,7 +22,7 @@ use App\Http\Controllers\Api\Accounts\ReportController;
 
 use App\Http\Controllers\Api\Purchase\SupplierController;
 use App\Http\Controllers\Api\Purchase\PurchaseController;
-
+use App\Http\Controllers\Api\Sales\CustomerController;
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
@@ -87,5 +87,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/purchases/{purchase}/payments', [PurchaseController::class, 'recordPayment'])->middleware('permission:purchase.purchase-payment.create');
     Route::get('/payments', [PurchaseController::class, 'payments'])->middleware('permission:purchase.purchase-payment.view');
     Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->middleware('permission:accounts.expense.view');
+    
+    
+    Route::get('/customers', [CustomerController::class, 'index'])->middleware('permission:sales.customer.view');
+    Route::get('/customers/all', [CustomerController::class, 'all'])->middleware('permission:sales.customer.view');
+    Route::post('/customers', [CustomerController::class, 'store'])->middleware('permission:sales.customer.create');
+    Route::put('/customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:sales.customer.edit');
+    Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:sales.customer.delete');
+
     });
 // });
