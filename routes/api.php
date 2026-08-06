@@ -24,6 +24,9 @@ use App\Http\Controllers\Api\Purchase\SupplierController;
 use App\Http\Controllers\Api\Purchase\PurchaseController;
 use App\Http\Controllers\Api\Sales\CustomerController;
 
+use App\Http\Controllers\Api\Manufacture\ItemController;
+use App\Http\Controllers\Api\Manufacture\ProductionController;
+
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -87,13 +90,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/purchases/{purchase}/payments', [PurchaseController::class, 'recordPayment'])->middleware('permission:purchase.purchase-payment.create');
     Route::get('/payments', [PurchaseController::class, 'payments'])->middleware('permission:purchase.purchase-payment.view');
     Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->middleware('permission:accounts.expense.view');
-    
-    
+
+
     Route::get('/customers', [CustomerController::class, 'index'])->middleware('permission:sales.customer.view');
     Route::get('/customers/all', [CustomerController::class, 'all'])->middleware('permission:sales.customer.view');
     Route::post('/customers', [CustomerController::class, 'store'])->middleware('permission:sales.customer.create');
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:sales.customer.edit');
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:sales.customer.delete');
 
-    });
+    Route::get('/items', [ItemController::class, 'index'])->middleware('permission:manufacturing.items.view');
+    Route::get('/items/all', [ItemController::class, 'all'])->middleware('permission:manufacturing.items.view');
+    Route::post('/items', [ItemController::class, 'store'])->middleware('permission:manufacturing.items.create');
+    Route::put('/items/{item}', [ItemController::class, 'update'])->middleware('permission:manufacturing.items.edit');
+    Route::delete('/items/{item}', [ItemController::class, 'destroy'])->middleware('permission:manufacturing.items.delete');
+    Route::put('/items/{item}/recipe', [ItemController::class, 'updateRecipe'])->middleware('permission:manufacturing.items.edit');
+
+    Route::get('/productions', [ProductionController::class, 'index'])->middleware('permission:manufacturing.productions.view');
+    Route::get('/productions/{production}', [ProductionController::class, 'show'])->middleware('permission:manufacturing.productions.view');
+    Route::post('/productions', [ProductionController::class, 'store'])->middleware('permission:manufacturing.productions.create');
+});
 // });
