@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\CompanySettingController;
 use App\Http\Controllers\Api\Sales\CustomerController;
 use App\Http\Controllers\Api\Sales\ProductController;
 use App\Http\Controllers\Api\Sales\OrderController;
+use App\Http\Controllers\Api\Sales\QuotationController;
+
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -133,5 +135,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:sales.order.view');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('permission:sales.order.view');
     Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:sales.order.create');
+    Route::get('/quotations', [QuotationController::class, 'index'])->middleware('permission:sales.quotation.view');
+    Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->middleware('permission:sales.quotation.view');
+    Route::post('/quotations', [QuotationController::class, 'store'])->middleware('permission:sales.quotation.create');
+
+    Route::post('/orders/{order}/invoice', [OrderController::class, 'markInvoiced'])->middleware('permission:sales.invoice.create');
 });
 // });
