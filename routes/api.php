@@ -22,11 +22,15 @@ use App\Http\Controllers\Api\Accounts\ReportController;
 
 use App\Http\Controllers\Api\Purchase\SupplierController;
 use App\Http\Controllers\Api\Purchase\PurchaseController;
-use App\Http\Controllers\Api\Sales\CustomerController;
 
 use App\Http\Controllers\Api\Manufacture\ItemController;
 use App\Http\Controllers\Api\Manufacture\ProductionController;
 
+use App\Http\Controllers\Api\CompanySettingController;
+
+use App\Http\Controllers\Api\Sales\CustomerController;
+use App\Http\Controllers\Api\Sales\ProductController;
+use App\Http\Controllers\Api\Sales\OrderController;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -34,6 +38,9 @@ use App\Http\Controllers\Api\Manufacture\ProductionController;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
+
+Route::get('/company-settings', [CompanySettingController::class, 'show']); // no permission gate — every logged-in user needs this to render dates correctly
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -108,5 +115,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/productions', [ProductionController::class, 'index'])->middleware('permission:manufacturing.productions.view');
     Route::get('/productions/{production}', [ProductionController::class, 'show'])->middleware('permission:manufacturing.productions.view');
     Route::post('/productions', [ProductionController::class, 'store'])->middleware('permission:manufacturing.productions.create');
+
+    Route::put('/company-settings', [CompanySettingController::class, 'update'])->middleware('permission:settings.company-profile.edit');
+
+    Route::get('/customers', [CustomerController::class, 'index'])->middleware('permission:sales.customer.view');
+    Route::get('/customers/all', [CustomerController::class, 'all'])->middleware('permission:sales.customer.view');
+    Route::post('/customers', [CustomerController::class, 'store'])->middleware('permission:sales.customer.create');
+    Route::put('/customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:sales.customer.edit');
+    Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->middleware('permission:sales.customer.delete');
+
+    Route::get('/products', [ProductController::class, 'index'])->middleware('permission:sales.product.view');
+    Route::get('/products/all', [ProductController::class, 'all'])->middleware('permission:sales.product.view');
+    Route::post('/products', [ProductController::class, 'store'])->middleware('permission:sales.product.create');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('permission:sales.product.edit');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('permission:sales.product.delete');
+
+    Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:sales.order.view');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('permission:sales.order.view');
+    Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:sales.order.create');
 });
 // });

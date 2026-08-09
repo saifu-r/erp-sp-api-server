@@ -11,7 +11,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $modules = [
-            'sales' => ['customer', 'quotation', 'order', 'invoice', 'payment'],
+            'sales' => ['customer', 'product', 'quotation', 'order', 'invoice', 'payment'],
             'inventory' => ['stock-adjustment'],
             'manufacturing' => [
                 'making-house',
@@ -27,6 +27,7 @@ class PermissionSeeder extends Seeder
             'admin' => ['user', 'role'],
             'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement', 'balance-sheet', 'expense-type', 'expense'],
             'purchase' => ['supplier', 'purchase', 'purchase-payment'],
+            'settings' => ['company-profile', 'preferences'],
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];

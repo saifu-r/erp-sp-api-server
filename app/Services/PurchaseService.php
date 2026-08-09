@@ -106,9 +106,19 @@ class PurchaseService
         });
     }
 
+    // private function generateReferenceNo(): string
+    // {
+    //     $last = Transaction::where('type', 'purchase')->orderBy('id', 'desc')->first();
+    //     $nextNumber = $last ? ((int) substr($last->reference_no, 4)) + 1 : 1;
+    //     return 'PUR-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    // }
     private function generateReferenceNo(): string
     {
-        $last = Transaction::where('type', 'purchase')->orderBy('id', 'desc')->first();
+        $last = Transaction::where('type', 'purchase')
+            ->where('reference_no', 'like', 'PUR-%')
+            ->orderByRaw('CAST(SUBSTRING(reference_no, 5) AS UNSIGNED) DESC')
+            ->first();
+
         $nextNumber = $last ? ((int) substr($last->reference_no, 4)) + 1 : 1;
         return 'PUR-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }

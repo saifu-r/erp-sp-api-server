@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Purchase\Supplier;
+use App\Models\Sales\Customer;
 use App\Models\Manufacture\MakingHouse;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ class Transaction extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'type', 'reference_no', 'supplier_id', 'customer_id', 'making_house_id',
+        'type', 'reference_no', 'supplier_id', 'customer_id', 'user_id', 'making_house_id',
         'date', 'total_amount', 'paid_amount', 'payment_status', 'status'
     ];
 
@@ -26,6 +27,8 @@ class Transaction extends Model
 
     public function supplier() { return $this->belongsTo(Supplier::class); }
     public function makingHouse() { return $this->belongsTo(MakingHouse::class); }
+    public function customer() { return $this->belongsTo(Customer::class); }
     public function items() { return $this->hasMany(TransactionItem::class); }
     public function payments() { return $this->hasMany(TransactionPayment::class); }
+
 }

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Accounts\JournalEntry;
 use Illuminate\Support\Facades\DB;
+use App\Models\CompanySetting;
+use Carbon\Carbon;
 
 class JournalPostingService
 {
@@ -13,6 +15,9 @@ class JournalPostingService
      */
     public function post(string $description, array $lines, ?string $referenceType = null, ?int $referenceId = null, ?string $date = null): JournalEntry
     {
+
+    
+        
         $totalDebit = array_sum(array_column($lines, 'debit'));
         $totalCredit = array_sum(array_column($lines, 'credit'));
 
@@ -22,7 +27,8 @@ class JournalPostingService
 
         return DB::transaction(function () use ($description, $lines, $referenceType, $referenceId, $date) {
             $entry = JournalEntry::create([
-                'date' => $date ?? now()->toDateString(),
+                // 'date' => $date ?? now()->toDateString(),
+                'date' => $date ?? Carbon::now(CompanySetting::timezone())->toDateString(),
                 'description' => $description,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
