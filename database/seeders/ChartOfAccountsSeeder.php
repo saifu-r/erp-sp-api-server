@@ -28,6 +28,8 @@ class ChartOfAccountsSeeder extends Seeder
 
             ['code' => '5000', 'name' => 'Expenses', 'type' => 'expense', 'parent_id' => null],
             ['code' => '5100', 'name' => 'Cost of Goods Sold', 'type' => 'expense', 'parent_code' => '5000'],
+
+            ['code' => '2200', 'name' => 'VAT Payable', 'type' => 'liability', 'parent_code' => '2000'],
         ];
 
         $createdByCode = [];

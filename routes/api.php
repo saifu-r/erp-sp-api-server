@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\Manufacture\ProductionController;
 use App\Http\Controllers\Api\CompanySettingController;
 
 use App\Http\Controllers\Api\Sales\CustomerController;
+use App\Http\Controllers\Api\Sales\InvoiceController;
 use App\Http\Controllers\Api\Sales\ProductController;
 use App\Http\Controllers\Api\Sales\OrderController;
 use App\Http\Controllers\Api\Sales\QuotationController;
@@ -135,6 +136,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:sales.order.view');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('permission:sales.order.view');
     Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:sales.order.create');
+
+    // Invoice — the real transaction
+    Route::get('/invoices', [InvoiceController::class, 'index'])->middleware('permission:sales.invoice.view');
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('permission:sales.invoice.view');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->middleware('permission:sales.invoice.create');
+    Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->middleware('permission:sales.payment.create');
+
+    Route::get('/invoice-payments', [InvoiceController::class, 'payments'])->middleware('permission:sales.payment.view');
+
     Route::get('/quotations', [QuotationController::class, 'index'])->middleware('permission:sales.quotation.view');
     Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->middleware('permission:sales.quotation.view');
     Route::post('/quotations', [QuotationController::class, 'store'])->middleware('permission:sales.quotation.create');

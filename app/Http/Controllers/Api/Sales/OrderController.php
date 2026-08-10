@@ -13,12 +13,12 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $query = Transaction::with(['customer', 'items.product'])->where('type', 'order');
+        $query = Transaction::with(['customer', 'quotation', 'invoice'])->where('type', 'order');
 
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('reference_no', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn($cq) => $cq->where('name', 'like', "%{$search}%"));
+                  ->orWhereHas('customer', fn($cq) => $cq->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -34,7 +34,7 @@ class OrderController extends Controller
 
     public function show(Transaction $order)
     {
-        return $order->load(['customer', 'items.product', 'payments']);
+        return $order->load(['customer', 'items.product', 'quotation', 'invoice']);
     }
 
     public function store(Request $request)
@@ -51,24 +51,12 @@ class OrderController extends Controller
             'products.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        try {
-            $order = $this->orderService->createOrder(
-                $data['customer_id'],
-                $data['date'],
-                $data['products'],
-                $data['discount_percent'] ?? 0,
-                $data['vat_percent'] ?? 0,
-                $data['quotation_id'] ?? null,
-                $request->user()->id
-            );
-            return response()->json($order, 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
-    }
+        $order = $this->orderService->createOrder(
+            $data['customer_id'], $data['date'], $data['products'],
+            $data['discount_percent'] ?? 0, $data['vat_percent'] ?? 0,
+            $data['quotation_id'] ?? null, $request->user()->id
+        );
 
-    public function markInvoiced(Transaction $order)
-    {
-        return $this->orderService->markInvoiced($order);
+        return response()->json($order, 201);
     }
 }

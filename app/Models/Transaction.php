@@ -17,6 +17,7 @@ class Transaction extends Model
         'type',
         'reference_no',
         'quotation_id',
+        'order_id',
         'supplier_id',
         'customer_id',
         'user_id',
@@ -80,4 +81,13 @@ class Transaction extends Model
     {
         return $this->hasMany(Transaction::class, 'quotation_id');
     } // if a quotation was converted
+
+    public function order()
+    {
+        return $this->belongsTo(Transaction::class, 'order_id');
+    }
+    public function invoice()
+    {
+        return $this->hasOne(Transaction::class, 'order_id');
+    }
 }

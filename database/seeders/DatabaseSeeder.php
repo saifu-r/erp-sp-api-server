@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RoleSeeder::class,
             UserSeeder::class,
+            ChartOfAccountsSeeder::class,   // must run before ExpenseTypeSeeder — it looks up account code 5000
+            ExpenseTypeSeeder::class,
         ]);
     }
 }
