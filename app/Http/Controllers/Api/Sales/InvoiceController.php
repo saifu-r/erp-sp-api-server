@@ -55,8 +55,8 @@ class InvoiceController extends Controller
                 $data['customer_id'] ?? null,
                 $data['date'] ?? null,
                 $data['products'] ?? null,
-                $data['discount_percent'] ?? 0,
-                $data['vat_percent'] ?? 0,
+                $data['discount_percent'] ?? null,
+                $data['vat_percent'] ?? null,
                 $request->user()->id
             );
             return response()->json($invoice, 201);
@@ -116,5 +116,21 @@ class InvoiceController extends Controller
         ]);
 
         return response()->json(['data' => $data, 'total' => $total]);
+    }
+
+    public function writeOff(Request $request, Transaction $invoice)
+    {
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'note' => 'nullable|string|max:255',
+        ]);
+
+        $remaining = $invoice->total_amount - $invoice->paid_amount - $invoice->write_off_amount;
+        if ($data['amount'] > $remaining) {
+            return response()->json(['message' => 'Write-off amount exceeds remaining balance.'], 422);
+        }
+
+        $invoice = $this->invoiceService->writeOff($invoice, $data['amount'], $data['note'] ?? null, $request->user()->id);
+        return response()->json($invoice, 201);
     }
 }

@@ -16,23 +16,29 @@ class InvoiceService
      * $products only needed when creating directly — when order_id is set, line items
      * are copied from the Order automatically.
      */
-    public function createInvoice(?int $orderId, ?int $customerId, ?string $date, ?array $products, float $discountPercent, float $vatPercent, ?int $userId): Transaction
+    public function createInvoice(?int $orderId, ?int $customerId, ?string $date, ?array $products, ?float $discountPercent, ?float $vatPercent, ?int $userId): Transaction
     {
         return DB::transaction(function () use ($orderId, $customerId, $date, $products, $discountPercent, $vatPercent, $userId) {
             $order = null;
             if ($orderId) {
                 /** @var Transaction $order */
                 $order = Transaction::with('items')->findOrFail($orderId);
-                $customerId = $order->customer_id;
+
+                // Only fall back to the Order's own values when the caller didn't send their own —
+                // this is what makes "edit during conversion" actually take effect.
+                $customerId = $customerId ?? $order->customer_id;
                 $date = $date ?? $order->date;
-                $discountPercent = $order->discount_percent;
-                $vatPercent = $order->vat_percent;
-                $products = $order->items->map(fn($i) => [
+                $discountPercent = $discountPercent ?? $order->discount_percent;
+                $vatPercent = $vatPercent ?? $order->vat_percent;
+                $products = $products ?: $order->items->map(fn($i) => [
                     'product_id' => $i->product_id,
                     'quantity' => $i->quantity,
                     'unit_price' => $i->cost_or_price,
                 ])->toArray();
             }
+
+            $discountPercent = $discountPercent ?? 0;
+            $vatPercent = $vatPercent ?? 0;
             $subtotal = 0;
             $totalCogs = 0;
             $lineItems = [];
@@ -141,8 +147,10 @@ class InvoiceService
         return DB::transaction(function () use ($invoice, $amount, $date, $method, $note) {
             $invoice->payments()->create(['amount' => $amount, 'date' => $date, 'method' => $method, 'note' => $note]);
 
+            // $newPaidAmount = $invoice->paid_amount + $amount;
+            // $paymentStatus = $newPaidAmount >= $invoice->total_amount ? 3 : ($newPaidAmount > 0 ? 2 : 1);
             $newPaidAmount = $invoice->paid_amount + $amount;
-            $paymentStatus = $newPaidAmount >= $invoice->total_amount ? 3 : ($newPaidAmount > 0 ? 2 : 1);
+            $paymentStatus = ($newPaidAmount + $invoice->write_off_amount) >= $invoice->total_amount ? 3 : (($newPaidAmount + $invoice->write_off_amount) > 0 ? 2 : 1);
 
             $invoice->update(['paid_amount' => $newPaidAmount, 'payment_status' => $paymentStatus]);
 
@@ -163,6 +171,37 @@ class InvoiceService
                 referenceType: 'invoice_payment',
                 referenceId: $invoice->id,
                 date: $date
+            );
+
+            return $invoice->fresh(['payments']);
+        });
+    }
+
+    public function writeOff(Transaction $invoice, float $amount, ?string $note, ?int $userId): Transaction
+    {
+        return DB::transaction(function () use ($invoice, $amount, $note, $userId) {
+            $newWriteOff = $invoice->write_off_amount + $amount;
+            $newPaidPlusWriteOff = $invoice->paid_amount + $newWriteOff;
+            $paymentStatus = $newPaidPlusWriteOff >= $invoice->total_amount ? 3 : ($newPaidPlusWriteOff > 0 ? 2 : 1);
+
+            $invoice->update(['write_off_amount' => $newWriteOff, 'payment_status' => $paymentStatus]);
+
+            if ($invoice->order_id) {
+                Transaction::where('id', $invoice->order_id)->update(['payment_status' => $paymentStatus]);
+            }
+
+            $discountAllowed = Account::where('code', '5150')->firstOrFail();
+            $accountsReceivable = Account::where('code', '1300')->firstOrFail();
+
+            $this->journal->post(
+                description: "Write-off for {$invoice->reference_no}" . ($note ? " ({$note})" : ''),
+                lines: [
+                    ['account_id' => $discountAllowed->id, 'debit' => $amount, 'credit' => 0],
+                    ['account_id' => $accountsReceivable->id, 'debit' => 0, 'credit' => $amount],
+                ],
+                referenceType: 'invoice_write_off',
+                referenceId: $invoice->id,
+                date: now()->toDateString()
             );
 
             return $invoice->fresh(['payments']);

@@ -144,7 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])->middleware('permission:sales.payment.create');
 
     Route::get('/invoice-payments', [InvoiceController::class, 'payments'])->middleware('permission:sales.payment.view');
-
+    Route::post('/invoices/{invoice}/write-off', [InvoiceController::class, 'writeOff'])->middleware('permission:sales.write-off.create');
     Route::get('/quotations', [QuotationController::class, 'index'])->middleware('permission:sales.quotation.view');
     Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->middleware('permission:sales.quotation.view');
     Route::post('/quotations', [QuotationController::class, 'store'])->middleware('permission:sales.quotation.create');
