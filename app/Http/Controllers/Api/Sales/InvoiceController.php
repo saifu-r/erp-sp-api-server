@@ -68,17 +68,32 @@ class InvoiceController extends Controller
     public function recordPayment(Request $request, Transaction $invoice)
     {
         $data = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
+            'amount' => 'required|numeric|min:0',
+            'write_off_amount' => 'nullable|numeric|min:0',
             'date' => 'required|date',
             'method' => 'nullable|string',
             'note' => 'nullable|string|max:255',
         ]);
 
-        if ($data['amount'] > ($invoice->total_amount - $invoice->paid_amount)) {
-            return response()->json(['message' => 'Payment exceeds remaining balance.'], 422);
+        $writeOffAmount = $data['write_off_amount'] ?? 0;
+        $remaining = $invoice->total_amount - $invoice->paid_amount - $invoice->write_off_amount;
+
+        if (($data['amount'] + $writeOffAmount) > $remaining) {
+            return response()->json(['message' => 'Payment + write-off exceeds remaining balance.'], 422);
+        }
+        if ($data['amount'] <= 0 && $writeOffAmount <= 0) {
+            return response()->json(['message' => 'Enter a payment amount or a write-off amount.'], 422);
         }
 
-        $invoice = $this->invoiceService->recordPayment($invoice, $data['amount'], $data['date'], $data['method'] ?? null, $data['note'] ?? null);
+        $invoice = $this->invoiceService->recordPayment(
+            $invoice,
+            $data['amount'],
+            $data['date'],
+            $data['method'] ?? null,
+            $data['note'] ?? null,
+            $writeOffAmount
+        );
+
         return response()->json($invoice, 201);
     }
 

@@ -142,70 +142,66 @@ class InvoiceService
         });
     }
 
-    public function recordPayment(Transaction $invoice, float $amount, string $date, ?string $method, ?string $note): Transaction
+    public function recordPayment(Transaction $invoice, float $amount, string $date, ?string $method, ?string $note, float $writeOffAmount = 0): Transaction
     {
-        return DB::transaction(function () use ($invoice, $amount, $date, $method, $note) {
-            $invoice->payments()->create(['amount' => $amount, 'date' => $date, 'method' => $method, 'note' => $note]);
+        return DB::transaction(function () use ($invoice, $amount, $date, $method, $note, $writeOffAmount) {
+            if ($amount > 0) {
+                $invoice->payments()->create(['amount' => $amount, 'date' => $date, 'method' => $method, 'note' => $note]);
+            }
 
-            // $newPaidAmount = $invoice->paid_amount + $amount;
-            // $paymentStatus = $newPaidAmount >= $invoice->total_amount ? 3 : ($newPaidAmount > 0 ? 2 : 1);
             $newPaidAmount = $invoice->paid_amount + $amount;
-            $paymentStatus = ($newPaidAmount + $invoice->write_off_amount) >= $invoice->total_amount ? 3 : (($newPaidAmount + $invoice->write_off_amount) > 0 ? 2 : 1);
+            $newWriteOff = $invoice->write_off_amount + $writeOffAmount;
+            $settledTotal = $newPaidAmount + $newWriteOff;
+            $paymentStatus = $settledTotal >= $invoice->total_amount ? 3 : ($settledTotal > 0 ? 2 : 1);
 
-            $invoice->update(['paid_amount' => $newPaidAmount, 'payment_status' => $paymentStatus]);
+            $invoice->update([
+                'paid_amount' => $newPaidAmount,
+                'write_off_amount' => $newWriteOff,
+                'payment_status' => $paymentStatus,
+            ]);
 
-            // Mirror onto the originating Order, if any
             if ($invoice->order_id) {
                 Transaction::where('id', $invoice->order_id)->update(['payment_status' => $paymentStatus]);
             }
 
             $accountsReceivable = Account::where('code', '1300')->firstOrFail();
-            $paidFromAccount = Account::where('name', $method === 'bank' ? 'Bank' : 'Cash')->firstOrFail();
 
-            $this->journal->post(
-                description: "Payment for {$invoice->reference_no}",
-                lines: [
-                    ['account_id' => $paidFromAccount->id, 'debit' => $amount, 'credit' => 0],
-                    ['account_id' => $accountsReceivable->id, 'debit' => 0, 'credit' => $amount],
-                ],
-                referenceType: 'invoice_payment',
-                referenceId: $invoice->id,
-                date: $date
-            );
+            if ($amount > 0) {
+                $paidFromAccount = Account::where('name', $method === 'bank' ? 'Bank' : 'Cash')->firstOrFail();
+                $this->journal->post(
+                    description: "Payment for {$invoice->reference_no}",
+                    lines: [
+                        ['account_id' => $paidFromAccount->id, 'debit' => $amount, 'credit' => 0],
+                        ['account_id' => $accountsReceivable->id, 'debit' => 0, 'credit' => $amount],
+                    ],
+                    referenceType: 'invoice_payment',
+                    referenceId: $invoice->id,
+                    date: $date
+                );
+            }
+
+            if ($writeOffAmount > 0) {
+                $discountAllowed = Account::where('code', '5150')->firstOrFail();
+                $this->journal->post(
+                    description: "Write-off for {$invoice->reference_no}" . ($note ? " ({$note})" : ''),
+                    lines: [
+                        ['account_id' => $discountAllowed->id, 'debit' => $writeOffAmount, 'credit' => 0],
+                        ['account_id' => $accountsReceivable->id, 'debit' => 0, 'credit' => $writeOffAmount],
+                    ],
+                    referenceType: 'invoice_write_off',
+                    referenceId: $invoice->id,
+                    date: $date
+                );
+            }
 
             return $invoice->fresh(['payments']);
         });
     }
 
+    /** Standalone write-off is just a payment of 0, plus a write-off — same engine, no duplication. */
     public function writeOff(Transaction $invoice, float $amount, ?string $note, ?int $userId): Transaction
     {
-        return DB::transaction(function () use ($invoice, $amount, $note, $userId) {
-            $newWriteOff = $invoice->write_off_amount + $amount;
-            $newPaidPlusWriteOff = $invoice->paid_amount + $newWriteOff;
-            $paymentStatus = $newPaidPlusWriteOff >= $invoice->total_amount ? 3 : ($newPaidPlusWriteOff > 0 ? 2 : 1);
-
-            $invoice->update(['write_off_amount' => $newWriteOff, 'payment_status' => $paymentStatus]);
-
-            if ($invoice->order_id) {
-                Transaction::where('id', $invoice->order_id)->update(['payment_status' => $paymentStatus]);
-            }
-
-            $discountAllowed = Account::where('code', '5150')->firstOrFail();
-            $accountsReceivable = Account::where('code', '1300')->firstOrFail();
-
-            $this->journal->post(
-                description: "Write-off for {$invoice->reference_no}" . ($note ? " ({$note})" : ''),
-                lines: [
-                    ['account_id' => $discountAllowed->id, 'debit' => $amount, 'credit' => 0],
-                    ['account_id' => $accountsReceivable->id, 'debit' => 0, 'credit' => $amount],
-                ],
-                referenceType: 'invoice_write_off',
-                referenceId: $invoice->id,
-                date: now()->toDateString()
-            );
-
-            return $invoice->fresh(['payments']);
-        });
+        return $this->recordPayment($invoice, 0, now()->toDateString(), null, $note, $amount);
     }
 
     private function generateReferenceNo(): string
