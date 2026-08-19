@@ -27,7 +27,7 @@ use App\Http\Controllers\Api\Manufacture\ItemController;
 use App\Http\Controllers\Api\Manufacture\ProductionController;
 
 use App\Http\Controllers\Api\CompanySettingController;
-
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\Sales\CustomerController;
 use App\Http\Controllers\Api\Sales\InvoiceController;
 use App\Http\Controllers\Api\Sales\ProductController;
@@ -150,5 +150,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/quotations', [QuotationController::class, 'store'])->middleware('permission:sales.quotation.create');
 
     Route::post('/orders/{order}/invoice', [OrderController::class, 'markInvoiced'])->middleware('permission:sales.invoice.create');
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 });
 // });
