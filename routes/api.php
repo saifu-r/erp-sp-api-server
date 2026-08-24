@@ -34,6 +34,9 @@ use App\Http\Controllers\Api\Sales\ProductController;
 use App\Http\Controllers\Api\Sales\OrderController;
 use App\Http\Controllers\Api\Sales\QuotationController;
 
+use App\Http\Controllers\Api\StockAdjustmentController;
+use App\Http\Controllers\Api\LedgerAdjustmentController;
+
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -152,5 +155,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/invoice', [OrderController::class, 'markInvoiced'])->middleware('permission:sales.invoice.create');
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])->middleware('permission:adjustment.stock-adjustment.view');
+    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('permission:adjustment.stock-adjustment.create');
+
+    Route::get('/ledger-adjustments', [LedgerAdjustmentController::class, 'index'])->middleware('permission:adjustment.ledger-adjustment.view');
+    Route::post('/ledger-adjustments', [LedgerAdjustmentController::class, 'store'])->middleware('permission:adjustment.ledger-adjustment.create');
 });
 // });

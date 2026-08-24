@@ -94,18 +94,34 @@ class DashboardController extends Controller
     // }
 
 
+    // private function expenseBreakdown(string $from, string $to): array
+    // {
+    //     return \App\Models\Accounts\Expense::with('expenseType')
+    //         ->whereBetween('date', [$from, $to])
+    //         ->selectRaw('expense_type_id, SUM(amount) as total')
+    //         ->groupBy('expense_type_id')
+    //         ->orderByDesc('total')
+    //         ->get()
+    //         ->map(fn($e) => [
+    //             'name' => $e->expenseType->name ?? '—',
+    //             'total' => (float) $e->total,
+    //         ])
+    //         ->toArray();
+    // }
+
     private function expenseBreakdown(string $from, string $to): array
     {
-        return \App\Models\Accounts\Expense::with('expenseType')
-            ->whereBetween('date', [$from, $to])
-            ->selectRaw('expense_type_id, SUM(amount) as total')
-            ->groupBy('expense_type_id')
+        return \App\Models\Accounts\JournalEntryLine::join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
+            ->where('accounts.type', 'expense')
+            ->whereNotIn('accounts.code', ['5100', '5150']) // exclude COGS and Discount Allowed — not operating expenses
+            ->whereBetween('journal_entries.date', [$from, $to])
+            ->groupBy('accounts.id', 'accounts.name')
+            ->selectRaw('accounts.name, SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as total')
+            ->having('total', '>', 0)
             ->orderByDesc('total')
             ->get()
-            ->map(fn($e) => [
-                'name' => $e->expenseType->name ?? '—',
-                'total' => (float) $e->total,
-            ])
+            ->map(fn($row) => ['name' => $row->name, 'total' => (float) $row->total])
             ->toArray();
     }
     private function recentTransactions(): array

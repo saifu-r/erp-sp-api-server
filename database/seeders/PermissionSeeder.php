@@ -25,6 +25,7 @@ class PermissionSeeder extends Seeder
             'delivery' => ['delivery-note'],
             'hrm' => ['employees', 'attendance', 'payroll'],
             'admin' => ['user', 'role'],
+            'adjustment' => ['stock-adjustment', 'ledger-adjustment'],
             'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement', 'balance-sheet', 'expense-type', 'expense'],
             'purchase' => ['supplier', 'purchase', 'purchase-payment'],
             'settings' => ['company-profile', 'preferences'],

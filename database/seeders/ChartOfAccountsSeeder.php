@@ -22,6 +22,7 @@ class ChartOfAccountsSeeder extends Seeder
 
             ['code' => '3000', 'name' => 'Equity', 'type' => 'equity', 'parent_id' => null],
             ['code' => '3100', 'name' => "Owner's Capital", 'type' => 'equity', 'parent_code' => '3000'],
+            ['code' => '3200', 'name' => 'Opening Balance Equity', 'type' => 'equity', 'parent_code' => '3000'],
 
             ['code' => '4000', 'name' => 'Income', 'type' => 'income', 'parent_id' => null],
             ['code' => '4100', 'name' => 'Sales Revenue', 'type' => 'income', 'parent_code' => '4000'],
