@@ -24,6 +24,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'kpis' => $this->kpis($from, $to),
+            'collections' => $this->collectionsList($from, $to),
             'counts' => $this->counts(),
             'expense_breakdown' => $this->expenseBreakdown($from, $to),
             'recent_transactions' => $this->recentTransactions(),
@@ -34,21 +35,43 @@ class DashboardController extends Controller
         ]);
     }
 
+    // private function kpis(string $from, string $to): array
+    // {
+    //     $totalSales = Transaction::where('type', 'invoice')->whereBetween('date', [$from, $to])->sum('total_amount');
+    //     $totalPurchase = Transaction::where('type', 'purchase')->whereBetween('date', [$from, $to])->sum('total_amount');
+
+    //     // Payable/Receivable are ALWAYS current balances — not scoped to the date range
+    //     $payable = Transaction::where('type', 'purchase')
+    //         ->whereIn('payment_status', [1, 2])
+    //         ->get()
+    //         ->sum(fn($t) => $t->total_amount - $t->paid_amount);
+
+    //     $receivable = Transaction::where('type', 'invoice')
+    //         ->whereIn('payment_status', [1, 2])
+    //         ->get()
+    //         ->sum(fn($t) => $t->total_amount - $t->paid_amount - $t->write_off_amount);
+
+    //     return [
+    //         'total_sales' => (float) $totalSales,
+    //         'total_purchase' => (float) $totalPurchase,
+    //         'accounts_payable' => (float) $payable,
+    //         'accounts_receivable' => (float) $receivable,
+    //     ];
+    // }
+
     private function kpis(string $from, string $to): array
     {
         $totalSales = Transaction::where('type', 'invoice')->whereBetween('date', [$from, $to])->sum('total_amount');
         $totalPurchase = Transaction::where('type', 'purchase')->whereBetween('date', [$from, $to])->sum('total_amount');
 
-        // Payable/Receivable are ALWAYS current balances — not scoped to the date range
-        $payable = Transaction::where('type', 'purchase')
-            ->whereIn('payment_status', [1, 2])
-            ->get()
-            ->sum(fn($t) => $t->total_amount - $t->paid_amount);
+        $accountsPayableId = Account::where('code', '2100')->value('id');
+        $accountsReceivableId = Account::where('code', '1300')->value('id');
 
-        $receivable = Transaction::where('type', 'invoice')
-            ->whereIn('payment_status', [1, 2])
-            ->get()
-            ->sum(fn($t) => $t->total_amount - $t->paid_amount - $t->write_off_amount);
+        $payable = JournalEntryLine::where('account_id', $accountsPayableId)
+            ->selectRaw('SUM(credit) - SUM(debit) as balance')->value('balance') ?? 0;
+
+        $receivable = JournalEntryLine::where('account_id', $accountsReceivableId)
+            ->selectRaw('SUM(debit) - SUM(credit) as balance')->value('balance') ?? 0;
 
         return [
             'total_sales' => (float) $totalSales,
@@ -244,5 +267,26 @@ class DashboardController extends Controller
         $rawMaterialValue = \App\Models\Manufacture\RawMaterialBatch::selectRaw('SUM(quantity_remaining * cost_per_unit) as value')->value('value') ?? 0;
         $itemValue = Item::selectRaw('SUM(stock_quantity * avg_cost_per_unit) as value')->value('value') ?? 0;
         return (float) ($rawMaterialValue + $itemValue);
+    }
+
+    private function collectionsList(string $from, string $to): array
+    {
+        $payments = \App\Models\TransactionPayment::with('transaction.customer')
+            ->whereHas('transaction', fn($q) => $q->where('type', 'invoice'))
+            ->whereBetween('date', [$from, $to]) // filter by the PAYMENT's own date, not the invoice's date
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $total = (float) $payments->sum('amount');
+
+        $recent = $payments->take(10)->map(fn($p) => [
+            'customer_name' => $p->transaction->customer->name ?? '—',
+            'date' => $p->date,
+            'invoice_reference_no' => $p->transaction->reference_no,
+            'amount' => (float) $p->amount,
+        ])->values()->toArray();
+
+        return ['total' => $total, 'items' => $recent];
     }
 }
