@@ -85,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/expense-types/{expenseType}', [ExpenseTypeController::class, 'update'])->middleware('permission:accounts.expense-type.edit');
     Route::delete('/expense-types/{expenseType}', [ExpenseTypeController::class, 'destroy'])->middleware('permission:accounts.expense-type.delete');
     Route::get('/reports/cash-flow', [CashFlowController::class, 'index'])->middleware('permission:accounts.cash-flow.view');
+    Route::get('/reports/cash-flow/details', [CashFlowController::class, 'details'])->middleware('permission:accounts.cash-flow.view');
 
     Route::get('/expenses', [ExpenseController::class, 'index'])->middleware('permission:accounts.expense.view');
     Route::post('/expenses', [ExpenseController::class, 'store'])->middleware('permission:accounts.expense.create');

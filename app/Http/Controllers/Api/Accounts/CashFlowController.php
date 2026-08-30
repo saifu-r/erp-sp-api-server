@@ -11,8 +11,11 @@ class CashFlowController extends Controller
 {
     public function index(Request $request)
     {
-        $from = $request->query('from', now()->startOfMonth()->toDateString());
+        // $from = $request->query('from', now()->startOfMonth()->toDateString());
+        // $to = $request->query('to', now()->toDateString());
+        $from = $request->query('from', now()->toDateString());
         $to = $request->query('to', now()->toDateString());
+
 
         $cashBankIds = Account::whereIn('code', ['1100', '1200'])->pluck('id')->toArray();
         $ownerCapitalId = Account::where('code', '3100')->value('id');
@@ -60,7 +63,8 @@ class CashFlowController extends Controller
         $netChange = $totalOperating + $totalInvesting + $totalFinancing;
 
         return response()->json([
-            'from' => $from, 'to' => $to,
+            'from' => $from,
+            'to' => $to,
             'beginning_balance' => (float) $beginningBalance,
             'operating' => $operating,
             'total_operating' => (float) $totalOperating,
@@ -81,5 +85,36 @@ class CashFlowController extends Controller
         $before ? $query->where('journal_entries.date', '<', $date) : $query->where('journal_entries.date', '<=', $date);
 
         return (float) ($query->selectRaw('SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as balance')->value('balance') ?? 0);
+    }
+
+    public function details(Request $request)
+    {
+        $from = $request->query('from', now()->toDateString()); // default: TODAY, not this month
+        $to = $request->query('to', now()->toDateString());
+
+        $cashBankIds = Account::whereIn('code', ['1100', '1200'])->pluck('id')->toArray();
+
+        $query = JournalEntryLine::whereIn('journal_entry_lines.account_id', $cashBankIds)
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->whereBetween('journal_entries.date', [$from, $to])
+            ->select('journal_entry_lines.*', 'journal_entries.date as entry_date', 'journal_entries.description');
+
+        $limit = (int) $request->query('limit', 20);
+        $page = (int) $request->query('page', 1);
+        $orderBy = strtolower($request->query('orderBy', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $total = $query->count();
+        $lines = $query->orderBy('journal_entries.date', $orderBy)
+            ->orderBy('journal_entry_lines.id', $orderBy)
+            ->skip(($page - 1) * $limit)->take($limit)->get();
+
+        $data = $lines->map(fn($line) => [
+            'date' => $line->entry_date,
+            'description' => $line->description,
+            'inflow' => (float) $line->debit,   // debit to Cash/Bank = money coming in
+            'outflow' => (float) $line->credit, // credit to Cash/Bank = money going out
+        ]);
+
+        return response()->json(['data' => $data, 'total' => $total]);
     }
 }
