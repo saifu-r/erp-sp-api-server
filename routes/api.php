@@ -37,6 +37,8 @@ use App\Http\Controllers\Api\Sales\QuotationController;
 use App\Http\Controllers\Api\StockAdjustmentController;
 use App\Http\Controllers\Api\LedgerAdjustmentController;
 
+use App\Http\Controllers\Api\Accounts\CashFlowController;
+
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -82,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/expense-types', [ExpenseTypeController::class, 'store'])->middleware('permission:accounts.expense-type.create');
     Route::put('/expense-types/{expenseType}', [ExpenseTypeController::class, 'update'])->middleware('permission:accounts.expense-type.edit');
     Route::delete('/expense-types/{expenseType}', [ExpenseTypeController::class, 'destroy'])->middleware('permission:accounts.expense-type.delete');
+    Route::get('/reports/cash-flow', [CashFlowController::class, 'index'])->middleware('permission:accounts.cash-flow.view');
 
     Route::get('/expenses', [ExpenseController::class, 'index'])->middleware('permission:accounts.expense.view');
     Route::post('/expenses', [ExpenseController::class, 'store'])->middleware('permission:accounts.expense.create');
