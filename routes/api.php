@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Manufacture\MakingCostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -125,6 +126,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/productions', [ProductionController::class, 'index'])->middleware('permission:manufacturing.productions.view');
     Route::get('/productions/{production}', [ProductionController::class, 'show'])->middleware('permission:manufacturing.productions.view');
     Route::post('/productions', [ProductionController::class, 'store'])->middleware('permission:manufacturing.productions.create');
+
+    Route::post('/productions', [ProductionController::class, 'store'])->middleware('permission:manufacturing.productions.create');
+    Route::get('/productions/{production}', [ProductionController::class, 'show'])->middleware('permission:manufacturing.productions.view');
+    Route::post('/productions/{production}/batches', [ProductionController::class, 'receiveBatch'])->middleware('permission:manufacturing.productions.create');
+    Route::post('/productions/{production}/finalize', [ProductionController::class, 'finalize'])->middleware('permission:manufacturing.productions.create');
+    Route::get('/productions/last-rate', [ProductionController::class, 'lastRate'])->middleware('permission:manufacturing.productions.view');
+
+    Route::get('/making-costs', [MakingCostController::class, 'index'])->middleware('permission:manufacturing.making-cost.view');
+    Route::post('/making-costs/{makingCost}/payments', [MakingCostController::class, 'recordPayment'])->middleware('permission:manufacturing.making-cost.create');
 
     Route::put('/company-settings', [CompanySettingController::class, 'update'])->middleware('permission:settings.company-profile.edit');
 

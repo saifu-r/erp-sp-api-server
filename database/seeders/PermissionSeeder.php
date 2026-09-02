@@ -20,7 +20,7 @@ class PermissionSeeder extends Seeder
                 'stock-adjustment',
                 'raw-material',
                 'raw-material-purchase',
-                'raw-material-transfer'
+                'raw-material-transfer', 'making-cost'
             ],
             'delivery' => ['delivery-note'],
             'hrm' => ['employees', 'attendance', 'payroll'],
