@@ -2,6 +2,7 @@
 
 namespace App\Models\Manufacture;
 
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,4 +27,5 @@ class Production extends Model
     public function wastageRawMaterial() { return $this->belongsTo(RawMaterial::class, 'wastage_raw_material_id'); }
     public function materialUsage() { return $this->hasMany(ProductionMaterialUsage::class); }
     public function batches() { return $this->hasMany(ProductionBatch::class); }
+    public function makingCost() { return $this->hasOne(Transaction::class, 'production_id')->where('type', 'making_cost'); }
 }

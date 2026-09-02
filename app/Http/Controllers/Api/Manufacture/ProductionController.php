@@ -10,11 +10,13 @@ use Illuminate\Http\Request;
 
 class ProductionController extends Controller
 {
-    public function __construct(private ProductionService $productionService, private MakingCostService $makingCostService) {}
+    public function __construct(private ProductionService $productionService, private MakingCostService $makingCostService)
+    {
+    }
 
     public function index(Request $request)
     {
-        $query = Production::with(['item', 'makingHouse']);
+        $query = Production::with(['item', 'makingHouse', 'makingCost']);
         $limit = (int) $request->query('limit', 20);
         $page = (int) $request->query('page', 1);
         $orderBy = strtolower($request->query('orderBy', 'desc')) === 'asc' ? 'asc' : 'desc';
@@ -25,7 +27,7 @@ class ProductionController extends Controller
 
     public function show(Production $production)
     {
-        return $production->load(['item', 'makingHouse', 'materialUsage.rawMaterial', 'batches.makingCostTransaction']);
+        return $production->load(['item', 'makingHouse', 'materialUsage.rawMaterial', 'batches', 'makingCost.payments']);
     }
 
     public function store(Request $request)
@@ -43,8 +45,12 @@ class ProductionController extends Controller
 
         try {
             $production = $this->productionService->startJob(
-                $data['item_id'], $data['making_house_id'], $data['materials'],
-                $data['rate_per_unit'], $data['estimated_unit'], $data['date']
+                $data['item_id'],
+                $data['making_house_id'],
+                $data['materials'],
+                $data['rate_per_unit'],
+                $data['estimated_unit'],
+                $data['date']
             );
             return response()->json($production, 201);
         } catch (\Exception $e) {
@@ -84,5 +90,28 @@ class ProductionController extends Controller
         $last = Production::where('item_id', $data['item_id'])->where('making_house_id', $data['making_house_id'])
             ->orderBy('created_at', 'desc')->first();
         return response()->json(['rate_per_unit' => $last->rate_per_unit ?? null]);
+    }
+
+    public function recordPaymentForProduction(Request $request, Production $production)
+    {
+        $makingCost = $production->makingCost;
+        if (!$makingCost) {
+            return response()->json(['message' => 'No making cost recorded for this production yet.'], 422);
+        }
+
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'write_off_amount' => 'nullable|numeric|min:0',
+            'date' => 'required|date',
+            'method' => 'nullable|string',
+            'note' => 'nullable|string|max:255',
+        ]);
+        $writeOff = $data['write_off_amount'] ?? 0;
+        $remaining = $makingCost->total_amount - $makingCost->paid_amount - $makingCost->write_off_amount;
+        if (($data['amount'] + $writeOff) > $remaining) {
+            return response()->json(['message' => 'Payment + write-off exceeds remaining balance.'], 422);
+        }
+        $result = $this->makingCostService->recordPayment($makingCost, $data['amount'], $data['date'], $data['method'] ?? null, $data['note'] ?? null, $writeOff);
+        return response()->json($result, 201);
     }
 }

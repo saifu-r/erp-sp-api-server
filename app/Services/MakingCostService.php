@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Accounts\Account;
+use App\Models\Manufacture\Production;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
@@ -10,41 +11,48 @@ class MakingCostService
 {
     public function __construct(private JournalPostingService $journal) {}
 
-    public function createForBatch(int $makingHouseId, int $productionBatchId, float $amount, string $date): Transaction
+    /** Adds this batch's cost onto the ONE running Making Cost payable for the whole job — creates it on first call. */
+    public function addBatchCost(Production $production, float $batchQuantity, string $date): Transaction
     {
-        return DB::transaction(function () use ($makingHouseId, $productionBatchId, $amount, $date) {
-            $transaction = Transaction::create([
-                'type' => 'making_cost',
-                'reference_no' => $this->generateReferenceNo(),
-                'making_house_id' => $makingHouseId,
-                'production_batch_id' => $productionBatchId,
-                'date' => $date,
-                'total_amount' => $amount,
-                'paid_amount' => 0,
-                'write_off_amount' => 0,
-                'payment_status' => 1,
-                'status' => 1,
-            ]);
+        return DB::transaction(function () use ($production, $batchQuantity, $date) {
+            $increment = $production->rate_per_unit * $batchQuantity;
+
+            $makingCost = Transaction::firstOrCreate(
+                ['type' => 'making_cost', 'production_id' => $production->id],
+                [
+                    'reference_no' => $this->generateReferenceNo(),
+                    'making_house_id' => $production->making_house_id,
+                    'date' => $date,
+                    'total_amount' => 0,
+                    'paid_amount' => 0,
+                    'write_off_amount' => 0,
+                    'payment_status' => 1,
+                    'status' => 1,
+                ]
+            );
+
+            $makingCost->total_amount += $increment;
+            $makingCost->save();
 
             $makingCostExpense = Account::where('code', '5160')->firstOrFail();
             $makingHousePayable = Account::where('code', '2150')->firstOrFail();
 
             $this->journal->post(
-                description: "Making cost — {$transaction->reference_no}",
+                description: "Making cost — {$makingCost->reference_no} (batch of {$batchQuantity})",
                 lines: [
-                    ['account_id' => $makingCostExpense->id, 'debit' => $amount, 'credit' => 0],
-                    ['account_id' => $makingHousePayable->id, 'debit' => 0, 'credit' => $amount],
+                    ['account_id' => $makingCostExpense->id, 'debit' => $increment, 'credit' => 0],
+                    ['account_id' => $makingHousePayable->id, 'debit' => 0, 'credit' => $increment],
                 ],
-                referenceType: 'making_cost',
-                referenceId: $transaction->id,
+                referenceType: 'making_cost_batch',
+                referenceId: $makingCost->id,
                 date: $date
             );
 
-            return $transaction;
+            return $makingCost->fresh();
         });
     }
 
-    /** Same combined payment + write-off pattern as InvoiceService::recordPayment(), just payable-direction. */
+    /** Unchanged from before — pays down whatever the accumulated total currently is. */
     public function recordPayment(Transaction $makingCost, float $amount, string $date, ?string $method, ?string $note, float $writeOffAmount = 0): Transaction
     {
         return DB::transaction(function () use ($makingCost, $amount, $date, $method, $note, $writeOffAmount) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Manufacture\Production;
 use App\Models\Purchase\Supplier;
 use App\Models\Sales\Customer;
 use App\Models\Manufacture\MakingHouse;
@@ -36,7 +37,8 @@ class Transaction extends Model
         'invoice_status',
         'invoice_reference_no',
         'invoiced_at',
-        'status'
+        'status',
+        'production_id'
     ];
 
     protected $casts = [
@@ -91,5 +93,9 @@ class Transaction extends Model
     public function invoice()
     {
         return $this->hasOne(Transaction::class, 'order_id');
+    }
+    public function production()
+    {
+        return $this->belongsTo(Production::class);
     }
 }

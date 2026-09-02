@@ -46,26 +46,29 @@ class ProductionService
     }
 
     /** Receives one batch: adds real stock now (at the estimated rate), creates the making-cost payable for this batch. */
-    public function receiveBatch(Production $production, float $quantity, string $date, ?int $userId): array
-    {
-        return DB::transaction(function () use ($production, $quantity, $date, $userId) {
-            if ($production->job_status === 2) {
-                throw new \Exception('This production job is already finalized.');
-            }
+public function receiveBatch(Production $production, float $quantity, string $date, ?int $userId): array
+{
+    return DB::transaction(function () use ($production, $quantity, $date, $userId) {
+        if ($production->job_status === 3) {
+            throw new \Exception('This production job is already completed.');
+        }
 
-            $batch = $production->batches()->create(['quantity' => $quantity, 'date' => $date, 'user_id' => $userId]);
+        $batch = $production->batches()->create(['quantity' => $quantity, 'date' => $date, 'user_id' => $userId]);
 
-            /** @var Item $item */
-            $item = Item::findOrFail($production->item_id);
-            $rawMaterialShare = ($production->total_raw_material_cost / $production->estimated_unit) * $quantity;
-            $item->addProduction($quantity, $rawMaterialShare + ($production->rate_per_unit * $quantity));
+        /** @var \App\Models\Manufacture\Item $item */
+        $item = \App\Models\Manufacture\Item::findOrFail($production->item_id);
+        $rawMaterialShare = ($production->total_raw_material_cost / $production->estimated_unit) * $quantity;
+        $item->addProduction($quantity, $rawMaterialShare + ($production->rate_per_unit * $quantity));
 
-            $makingCostAmount = $production->rate_per_unit * $quantity;
-            $makingCostTx = $this->makingCostService->createForBatch($production->making_house_id, $batch->id, $makingCostAmount, $date);
+        $makingCostTx = $this->makingCostService->addBatchCost($production, $quantity, $date);
 
-            return ['batch' => $batch, 'making_cost' => $makingCostTx];
-        });
-    }
+        if ($production->job_status === 1) {
+            $production->update(['job_status' => 2]); // Pending → In Progress on first batch
+        }
+
+        return ['batch' => $batch, 'making_cost' => $makingCostTx];
+    });
+}
 
     /** Closes the job: computes true cost from actual total, corrects the Item's pooled average, optional wastage. */
     public function finalize(Production $production, float $wastageQuantity = 0, ?int $wastageRawMaterialId = null): array

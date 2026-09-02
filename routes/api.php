@@ -133,6 +133,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/productions/{production}/finalize', [ProductionController::class, 'finalize'])->middleware('permission:manufacturing.productions.create');
     Route::get('/productions/last-rate', [ProductionController::class, 'lastRate'])->middleware('permission:manufacturing.productions.view');
 
+    Route::post('/productions/{production}/making-cost/payments', [MakingCostController::class, 'recordPaymentForProduction'])->middleware('permission:manufacturing.making-cost.create');
+    
     Route::get('/making-costs', [MakingCostController::class, 'index'])->middleware('permission:manufacturing.making-cost.view');
     Route::post('/making-costs/{makingCost}/payments', [MakingCostController::class, 'recordPayment'])->middleware('permission:manufacturing.making-cost.create');
 
