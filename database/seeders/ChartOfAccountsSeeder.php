@@ -19,6 +19,7 @@ class ChartOfAccountsSeeder extends Seeder
 
             ['code' => '2000', 'name' => 'Liabilities', 'type' => 'liability', 'parent_id' => null],
             ['code' => '2100', 'name' => 'Accounts Payable', 'type' => 'liability', 'parent_code' => '2000'],
+            ['code' => '2150', 'name' => 'Making House Payable', 'type' => 'liability', 'parent_code' => '2000'],
 
             ['code' => '3000', 'name' => 'Equity', 'type' => 'equity', 'parent_id' => null],
             ['code' => '3100', 'name' => "Owner's Capital", 'type' => 'equity', 'parent_code' => '3000'],
@@ -26,13 +27,21 @@ class ChartOfAccountsSeeder extends Seeder
 
             ['code' => '4000', 'name' => 'Income', 'type' => 'income', 'parent_id' => null],
             ['code' => '4100', 'name' => 'Sales Revenue', 'type' => 'income', 'parent_code' => '4000'],
+            ['code' => '4100', 'name' => 'Sales Revenue', 'type' => 'income', 'parent_code' => '4000'],
+            ['code' => '4200', 'name' => 'Discount Received', 'type' => 'income', 'parent_code' => '4000'],
 
             ['code' => '5000', 'name' => 'Expenses', 'type' => 'expense', 'parent_id' => null],
             ['code' => '5100', 'name' => 'Cost of Goods Sold', 'type' => 'expense', 'parent_code' => '5000'],
+            ['code' => '5160', 'name' => 'Making Cost Expense', 'type' => 'expense', 'parent_code' => '5000'],
 
             ['code' => '2200', 'name' => 'VAT Payable', 'type' => 'liability', 'parent_code' => '2000'],
             ['code' => '5150', 'name' => 'Discount Allowed', 'type' => 'expense', 'parent_code' => '5000'],
         ];
+
+
+//         \App\Models\Accounts\Account::firstOrCreate(['code' => '2150'], ['name' => 'Making House Payable', 'type' => 'liability', 'parent_id' => $liabilities->id, 'is_system' => true]);
+// \App\Models\Accounts\Account::firstOrCreate(['code' => '5160'], ['name' => 'Making Cost Expense', 'type' => 'expense', 'parent_id' => $expenses->id, 'is_system' => true]);
+// \App\Models\Accounts\Account::firstOrCreate(['code' => '4200'], ['name' => 'Discount Received', 'type' => 'income', 'parent_id' => $income->id, 'is_system' => true]);
 
         $createdByCode = [];
 

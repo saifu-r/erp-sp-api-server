@@ -64,14 +64,16 @@ class DashboardController extends Controller
         $totalSales = Transaction::where('type', 'invoice')->whereBetween('date', [$from, $to])->sum('total_amount');
         $totalPurchase = Transaction::where('type', 'purchase')->whereBetween('date', [$from, $to])->sum('total_amount');
 
-        $accountsPayableId = Account::where('code', '2100')->value('id');
-        $accountsReceivableId = Account::where('code', '1300')->value('id');
+        // Payable now covers BOTH Supplier purchases AND Making House costs — both are real payables
+        $payable = Transaction::whereIn('type', ['purchase', 'making_cost'])
+            ->whereIn('payment_status', [1, 2])
+            ->get()
+            ->sum(fn($t) => $t->total_amount - $t->paid_amount - $t->write_off_amount);
 
-        $payable = JournalEntryLine::where('account_id', $accountsPayableId)
-            ->selectRaw('SUM(credit) - SUM(debit) as balance')->value('balance') ?? 0;
-
-        $receivable = JournalEntryLine::where('account_id', $accountsReceivableId)
-            ->selectRaw('SUM(debit) - SUM(credit) as balance')->value('balance') ?? 0;
+        $receivable = Transaction::where('type', 'invoice')
+            ->whereIn('payment_status', [1, 2])
+            ->get()
+            ->sum(fn($t) => $t->total_amount - $t->paid_amount - $t->write_off_amount);
 
         return [
             'total_sales' => (float) $totalSales,
@@ -80,7 +82,6 @@ class DashboardController extends Controller
             'accounts_receivable' => (float) $receivable,
         ];
     }
-
     private function counts(): array
     {
         return [
@@ -137,7 +138,7 @@ class DashboardController extends Controller
         return \App\Models\Accounts\JournalEntryLine::join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
             ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
             ->where('accounts.type', 'expense')
-            ->whereNotIn('accounts.code', ['5100', '5150']) // exclude COGS and Discount Allowed — not operating expenses
+            ->whereNotIn('accounts.code', ['5100', '5150', '5160']) // exclude COGS and Discount Allowed — not operating expenses
             ->whereBetween('journal_entries.date', [$from, $to])
             ->groupBy('accounts.id', 'accounts.name')
             ->selectRaw('accounts.name, SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) as total')
@@ -168,14 +169,21 @@ class DashboardController extends Controller
 
         // Payments — both sale-side and purchase-side
         foreach (
-            \App\Models\TransactionPayment::with(['transaction.customer', 'transaction.supplier'])
+            \App\Models\TransactionPayment::with(['transaction.customer', 'transaction.supplier', 'transaction.makingHouse'])
                 ->latest('created_at')->limit(15)->get() as $p
         ) {
             $tx = $p->transaction;
-            $isSale = $tx->type === 'invoice';
+
+            $party = match ($tx->type) {
+                'invoice' => $tx->customer->name ?? '—',
+                'purchase' => $tx->supplier->name ?? '—',
+                'making_cost' => $tx->makingHouse->name ?? '—',
+                default => '—',
+            };
+
             $feed[] = [
-                'type' => $isSale ? 'Payment Received' : 'Payment Made',
-                'party' => $isSale ? ($tx->customer->name ?? '—') : ($tx->supplier->name ?? '—'),
+                'type' => $tx->type === 'invoice' ? 'Payment Received' : 'Payment Made',
+                'party' => $party,
                 'reference_no' => $tx->reference_no,
                 'amount' => (float) $p->amount,
                 'date' => $p->date,
