@@ -13,7 +13,7 @@ class Production extends Model
 
     protected $fillable = [
         'item_id', 'making_house_id', 'rate_per_unit', 'estimated_unit', 'estimated_avg_cost',
-        'actual_unit', 'final_avg_cost', 'cost_variance', 'job_status',
+        'total_raw_material_cost', 'actual_unit', 'final_avg_cost', 'cost_variance', 'job_status',
         'wastage_quantity', 'wastage_raw_material_id', 'date', 'status'
     ];
     protected $casts = [
