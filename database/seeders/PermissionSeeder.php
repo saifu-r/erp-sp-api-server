@@ -23,7 +23,8 @@ class PermissionSeeder extends Seeder
                 'raw-material-transfer', 'making-cost'
             ],
             'delivery' => ['delivery-note'],
-            'hrm' => ['employees', 'attendance', 'payroll'],
+            // 'hrm' => ['employees', 'attendance', 'payroll'],
+            'hrm' => ['employee', 'absence', 'advance-salary', 'salary-payment'],
             'admin' => ['user', 'role'],
             'adjustment' => ['stock-adjustment', 'ledger-adjustment'],
             'accounts' => ['chart-of-accounts', 'journal', 'trial-balance', 'income-statement', 'balance-sheet', 'cash-flow', 'expense-type', 'expense'],

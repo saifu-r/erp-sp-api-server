@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Hrm\AbsenceController;
+use App\Http\Controllers\Api\Hrm\AdvanceSalaryController;
+use App\Http\Controllers\Api\Hrm\EmployeeController;
+use App\Http\Controllers\Api\Hrm\SalaryPaymentController;
 use App\Http\Controllers\Api\Manufacture\MakingCostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -134,7 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/productions/last-rate', [ProductionController::class, 'lastRate'])->middleware('permission:manufacturing.productions.view');
 
     Route::post('/productions/{production}/making-cost/payments', [MakingCostController::class, 'recordPaymentForProduction'])->middleware('permission:manufacturing.making-cost.create');
-    
+
     Route::get('/making-costs', [MakingCostController::class, 'index'])->middleware('permission:manufacturing.making-cost.view');
     Route::post('/making-costs/{makingCost}/payments', [MakingCostController::class, 'recordPayment'])->middleware('permission:manufacturing.making-cost.create');
 
@@ -177,5 +181,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/ledger-adjustments', [LedgerAdjustmentController::class, 'index'])->middleware('permission:adjustment.ledger-adjustment.view');
     Route::post('/ledger-adjustments', [LedgerAdjustmentController::class, 'store'])->middleware('permission:adjustment.ledger-adjustment.create');
+
+    Route::apiResource('employees', EmployeeController::class)->except(['show']);
+    Route::get('/employees/all', [EmployeeController::class, 'all'])->middleware('permission:hrm.employee.view');
+
+    Route::get('/absences', [AbsenceController::class, 'index'])->middleware('permission:hrm.absence.view');
+    Route::post('/absences', [AbsenceController::class, 'store'])->middleware('permission:hrm.absence.create');
+    Route::delete('/absences/{absence}', [AbsenceController::class, 'destroy'])->middleware('permission:hrm.absence.delete');
+
+    Route::get('/advance-salaries', [AdvanceSalaryController::class, 'index'])->middleware('permission:hrm.advance-salary.view');
+    Route::post('/advance-salaries', [AdvanceSalaryController::class, 'store'])->middleware('permission:hrm.advance-salary.create');
+
+    Route::get('/salary-payments', [SalaryPaymentController::class, 'index'])->middleware('permission:hrm.salary-payment.view');
+    Route::get('/salary-payments/preview', [SalaryPaymentController::class, 'preview'])->middleware('permission:hrm.salary-payment.view');
+    Route::post('/salary-payments', [SalaryPaymentController::class, 'store'])->middleware('permission:hrm.salary-payment.create');
+
 });
 // });
