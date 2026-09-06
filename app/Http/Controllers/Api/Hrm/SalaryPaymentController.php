@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\Hrm;
 
 use App\Http\Controllers\Controller;
@@ -40,10 +41,25 @@ class SalaryPaymentController extends Controller
             'date' => 'required|date',
         ]);
 
+        $alreadyProcessed = SalaryPayment::where('employee_id', $data['employee_id'])
+            ->where('period_month', $data['period_month'])
+            ->exists();
+
+        if ($alreadyProcessed) {
+            return response()->json(['message' => 'Salary for this employee has already been processed for this period.'], 422);
+        }
+
         try {
             $salary = $this->service->processSalary(
-                $data['employee_id'], $data['period_month'], $data['absent_days'], $data['absence_deduction'],
-                $data['bonus'] ?? 0, $data['advance_recovered'] ?? 0, $data['paid_from'], $data['date'], $request->user()->id
+                $data['employee_id'],
+                $data['period_month'],
+                $data['absent_days'],
+                $data['absence_deduction'],
+                $data['bonus'] ?? 0,
+                $data['advance_recovered'] ?? 0,
+                $data['paid_from'],
+                $data['date'],
+                $request->user()->id
             );
             return response()->json($salary, 201);
         } catch (\Exception $e) {

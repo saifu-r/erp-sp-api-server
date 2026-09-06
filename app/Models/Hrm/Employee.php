@@ -9,7 +9,7 @@ class Employee extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = ['name', 'phone', 'address', 'designation', 'joining_date', 'base_salary', 'status'];
-    protected $casts = ['base_salary' => 'float', 'status' => 'integer', 'joining_date' => 'date'];
+    protected $casts = ['base_salary' => 'float', 'status' => 'integer', 'joining_date' => 'date:Y-m-d'];
 
     public function absences() { return $this->hasMany(Absence::class); }
     public function advanceSalaries() { return $this->hasMany(AdvanceSalary::class); }

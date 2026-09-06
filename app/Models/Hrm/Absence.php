@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Hrm;
 
 use Illuminate\Database\Eloquent\Model;
@@ -6,9 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Absence extends Model
 {
     protected $fillable = ['employee_id', 'from_date', 'to_date', 'reason'];
-    protected $casts = ['from_date' => 'date', 'to_date' => 'date'];
+    protected $casts = [
+        'from_date' => 'date:Y-m-d',
+        'to_date' => 'date:Y-m-d',
+    ];
 
-    public function employee() { return $this->belongsTo(Employee::class); }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
 
     public function getDaysAttribute(): int
     {

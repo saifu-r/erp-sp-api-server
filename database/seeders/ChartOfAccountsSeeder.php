@@ -16,6 +16,7 @@ class ChartOfAccountsSeeder extends Seeder
             ['code' => '1300', 'name' => 'Accounts Receivable', 'type' => 'asset', 'parent_code' => '1000'],
             ['code' => '1400', 'name' => 'Raw Material Inventory', 'type' => 'asset', 'parent_code' => '1000'],
             ['code' => '1500', 'name' => 'Finished Goods Inventory', 'type' => 'asset', 'parent_code' => '1000'],
+            ['code' => '1600', 'name' => 'Employee Advance', 'type' => 'asset', 'parent_code' => '1000'],
 
             ['code' => '2000', 'name' => 'Liabilities', 'type' => 'liability', 'parent_id' => null],
             ['code' => '2100', 'name' => 'Accounts Payable', 'type' => 'liability', 'parent_code' => '2000'],

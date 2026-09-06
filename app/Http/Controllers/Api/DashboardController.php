@@ -221,6 +221,30 @@ class DashboardController extends Controller
             ];
         }
 
+        // Salary payments
+        foreach (\App\Models\Hrm\SalaryPayment::with('employee')->latest('created_at')->limit(10)->get() as $s) {
+            $feed[] = [
+                'type' => 'Salary Paid',
+                'party' => $s->employee->name ?? '—',
+                'reference_no' => 'SAL-' . $s->id,
+                'amount' => (float) $s->net_paid,
+                'date' => $s->date,
+                'sort' => $s->created_at,
+            ];
+        }
+
+        // Advance salary given
+        foreach (\App\Models\Hrm\AdvanceSalary::with('employee')->latest('created_at')->limit(10)->get() as $a) {
+            $feed[] = [
+                'type' => 'Advance Given',
+                'party' => $a->employee->name ?? '—',
+                'reference_no' => 'ADV-' . $a->id,
+                'amount' => (float) $a->amount,
+                'date' => $a->date,
+                'sort' => $a->created_at,
+            ];
+        }
+
         usort($feed, fn($a, $b) => $b['sort'] <=> $a['sort']);
 
         return array_slice(array_map(fn($f) => [
