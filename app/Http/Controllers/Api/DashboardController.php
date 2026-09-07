@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Accounts\Account;
 use App\Models\Accounts\JournalEntryLine;
 use App\Models\Manufacture\Item;
+use App\Models\Manufacture\Production;
 use App\Models\Manufacture\RawMaterial;
 use App\Models\Purchase\Supplier;
 use App\Models\Sales\Customer;
@@ -30,6 +31,8 @@ class DashboardController extends Controller
             'recent_transactions' => $this->recentTransactions(),
             'top_customers' => $this->topCustomers($from, $to),
             'top_products' => $this->topProducts($from, $to),
+            'low_stock_items' => $this->lowStockItems(),
+            'running_productions' => $this->runningProductions(),
             'cash_bank' => $this->cashBank(),
             'inventory_value' => $this->inventoryValue(),
         ]);
@@ -320,5 +323,28 @@ class DashboardController extends Controller
         ])->values()->toArray();
 
         return ['total' => $total, 'items' => $recent];
+    }
+
+    private function lowStockItems(): array
+    {
+        return Item::where('low_stock_alert_enabled', true)
+            ->whereColumn('stock_quantity', '<', 'minimum_stock_quantity')
+            ->get(['id', 'name', 'stock_quantity', 'minimum_stock_quantity', 'unit'])
+            ->toArray();
+    }
+
+    private function runningProductions(): array
+    {
+        return Production::whereIn('job_status', [1, 2]) // 2 = In Progress, 1 = Pending
+            ->with(['item', 'makingHouse'])
+            ->get()
+            ->map(fn($p) => [
+                'item_name' => $p->item->name ?? '—',
+                'making_house_name' => $p->makingHouse->name ?? '—',
+                'estimated_unit' => (float) $p->estimated_unit,
+                'received_so_far' => (float) $p->batches()->sum('quantity'),
+                'date' => $p->date,
+            ])
+            ->toArray();
     }
 }

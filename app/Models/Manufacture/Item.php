@@ -10,12 +10,13 @@ class Item extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'unit', 'stock_quantity', 'avg_cost_per_unit', 'status'];
+    protected $fillable = ['name', 'unit', 'stock_quantity', 'avg_cost_per_unit', 'status', 'low_stock_alert_enabled', 'minimum_stock_quantity'];
     protected $casts = [
         'unit' => 'integer',
         'stock_quantity' => 'float',
         'avg_cost_per_unit' => 'float',
         'status' => 'integer',
+        'low_stock_alert_enabled' => 'boolean', 'minimum_stock_quantity' => 'float'
     ];
 
     public function recipeLines()

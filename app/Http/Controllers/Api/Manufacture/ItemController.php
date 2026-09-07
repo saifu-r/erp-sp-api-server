@@ -34,22 +34,26 @@ class ItemController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'unit' => 'required|integer|min:1',
-            'status' => 'required|integer|in:1,2',
-        ]);
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'unit' => 'required|integer|min:1',
+        'status' => 'required|integer|in:1,2',
+        'low_stock_alert_enabled' => 'boolean',
+        'minimum_stock_quantity' => 'nullable|required_if:low_stock_alert_enabled,true|numeric|min:0',
+    ]);
 
         return response()->json(Item::create($data), 201);
     }
 
     public function update(Request $request, Item $item)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'unit' => 'required|integer|min:1',
-            'status' => 'required|integer|in:1,2',
-        ]);
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'unit' => 'required|integer|min:1',
+        'status' => 'required|integer|in:1,2',
+        'low_stock_alert_enabled' => 'boolean',
+        'minimum_stock_quantity' => 'nullable|required_if:low_stock_alert_enabled,true|numeric|min:0',
+    ]);
 
         $item->update($data);
         return $item;
