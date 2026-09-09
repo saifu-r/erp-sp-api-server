@@ -11,6 +11,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $modules = [
+            'dashboard' => ['view'],
             'sales' => ['customer', 'product', 'quotation', 'order', 'invoice', 'payment', 'write-off'],
             'inventory' => ['stock-adjustment'],
             'manufacturing' => [
