@@ -175,8 +175,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order}/invoice', [OrderController::class, 'markInvoiced'])->middleware('permission:sales.invoice.create');
 
     // Route::get('/dashboard', [DashboardController::class, 'index']);
-    // Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view');
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view');
+    // Route::get('/dashboard', [DashboardController::class, 'index']);
 
 
     Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])->middleware('permission:adjustment.stock-adjustment.view');

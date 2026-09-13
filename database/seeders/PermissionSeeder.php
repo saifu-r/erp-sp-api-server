@@ -11,7 +11,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $modules = [
-            'dashboard' => ['view'],
+            // 'dashboard' => ['view'],
             'sales' => ['customer', 'product', 'quotation', 'order', 'invoice', 'payment', 'write-off'],
             'inventory' => ['stock-adjustment'],
             'manufacturing' => [
@@ -24,7 +24,6 @@ class PermissionSeeder extends Seeder
                 'raw-material-transfer', 'making-cost'
             ],
             'delivery' => ['delivery-note'],
-            // 'hrm' => ['employees', 'attendance', 'payroll'],
             'hrm' => ['employee', 'absence', 'advance-salary', 'salary-payment'],
             'admin' => ['user', 'role'],
             'adjustment' => ['stock-adjustment', 'ledger-adjustment'],
@@ -47,5 +46,14 @@ class PermissionSeeder extends Seeder
                 }
             }
         }
+
+        // Dashboard only ever needs "view" — not a create/edit/delete resource,
+        // so it's added directly here instead of going through the module/feature/action loop above.
+        Permission::firstOrCreate([
+            'code' => 'dashboard.view',
+        ], [
+            'module' => 'dashboard',
+            'label' => 'View Dashboard',
+        ]);
     }
 }
