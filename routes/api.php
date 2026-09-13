@@ -181,9 +181,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])->middleware('permission:adjustment.stock-adjustment.view');
     Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])->middleware('permission:adjustment.stock-adjustment.create');
-
+    Route::get('/stock-adjustments/{stockAdjustment}', [StockAdjustmentController::class, 'show'])->middleware('permission:adjustment.stock-adjustment.view');
     Route::get('/ledger-adjustments', [LedgerAdjustmentController::class, 'index'])->middleware('permission:adjustment.ledger-adjustment.view');
     Route::post('/ledger-adjustments', [LedgerAdjustmentController::class, 'store'])->middleware('permission:adjustment.ledger-adjustment.create');
+    Route::get('/ledger-adjustments/{ledgerAdjustment}', [LedgerAdjustmentController::class, 'show'])->middleware('permission:adjustment.ledger-adjustment.view');
 
     Route::apiResource('employees', EmployeeController::class)->except(['show']);
     Route::get('/employees/all', [EmployeeController::class, 'all'])->middleware('permission:hrm.employee.view');
@@ -194,10 +195,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/advance-salaries', [AdvanceSalaryController::class, 'index'])->middleware('permission:hrm.advance-salary.view');
     Route::post('/advance-salaries', [AdvanceSalaryController::class, 'store'])->middleware('permission:hrm.advance-salary.create');
-
+    Route::get('/advance-salaries/{advanceSalary}', [AdvanceSalaryController::class, 'show'])->middleware('permission:hrm.advance-salary.view');
     Route::get('/salary-payments', [SalaryPaymentController::class, 'index'])->middleware('permission:hrm.salary-payment.view');
     Route::get('/salary-payments/preview', [SalaryPaymentController::class, 'preview'])->middleware('permission:hrm.salary-payment.view');
     Route::post('/salary-payments', [SalaryPaymentController::class, 'store'])->middleware('permission:hrm.salary-payment.create');
-
+    Route::get('/salary-payments/{salaryPayment}', [SalaryPaymentController::class, 'show'])->middleware('permission:hrm.salary-payment.view');
 });
 // });

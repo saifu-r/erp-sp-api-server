@@ -42,18 +42,33 @@ class StockAdjustmentController extends Controller
         try {
             if ($data['adjustable_type'] === 'raw_material') {
                 $adjustment = $this->service->adjustRawMaterial(
-                    $data['raw_material_id'], $data['location_type'], $data['location_id'] ?? null,
-                    $data['quantity_change'], $data['cost_per_unit'] ?? null, $data['reason'], $data['date'], $request->user()->id
+                    $data['raw_material_id'],
+                    $data['location_type'],
+                    $data['location_id'] ?? null,
+                    $data['quantity_change'],
+                    $data['cost_per_unit'] ?? null,
+                    $data['reason'],
+                    $data['date'],
+                    $request->user()->id
                 );
             } else {
                 $adjustment = $this->service->adjustItem(
-                    $data['item_id'], $data['quantity_change'], $data['cost_per_unit'] ?? null,
-                    $data['reason'], $data['date'], $request->user()->id
+                    $data['item_id'],
+                    $data['quantity_change'],
+                    $data['cost_per_unit'] ?? null,
+                    $data['reason'],
+                    $data['date'],
+                    $request->user()->id
                 );
             }
             return response()->json($adjustment, 201);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+    }
+
+    public function show(StockAdjustment $stockAdjustment)
+    {
+        return $stockAdjustment->load(['rawMaterial', 'item']);
     }
 }

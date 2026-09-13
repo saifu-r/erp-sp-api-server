@@ -22,11 +22,11 @@ class SalaryPaymentController extends Controller
         return response()->json(['data' => $data, 'total' => $total]);
     }
 
-    public function preview(Request $request)
-    {
-        $data = $request->validate(['employee_id' => 'required|exists:employees,id', 'period_month' => 'required|string']);
-        return response()->json($this->service->calculatePreview($data['employee_id'], $data['period_month']));
-    }
+    // public function preview(Request $request)
+    // {
+    //     $data = $request->validate(['employee_id' => 'required|exists:employees,id', 'period_month' => 'required|string']);
+    //     return response()->json($this->service->calculatePreview($data['employee_id'], $data['period_month']));
+    // }
 
     public function store(Request $request)
     {
@@ -65,5 +65,24 @@ class SalaryPaymentController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+    }
+
+    public function preview(Request $request)
+    {
+        $data = $request->validate(['employee_id' => 'required|exists:employees,id', 'period_month' => 'required|string']);
+
+        $alreadyProcessed = SalaryPayment::where('employee_id', $data['employee_id'])
+            ->where('period_month', $data['period_month'])
+            ->exists();
+
+        $preview = $this->service->calculatePreview($data['employee_id'], $data['period_month']);
+        $preview['already_processed'] = $alreadyProcessed;
+
+        return response()->json($preview);
+    }
+
+    public function show(SalaryPayment $salaryPayment)
+    {
+        return $salaryPayment->load('employee');
     }
 }

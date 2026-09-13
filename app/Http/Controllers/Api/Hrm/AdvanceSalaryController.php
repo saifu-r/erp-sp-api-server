@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\Hrm;
 
 use App\Http\Controllers\Controller;
@@ -35,5 +36,10 @@ class AdvanceSalaryController extends Controller
 
         $advance = $this->service->giveAdvance($data['employee_id'], $data['amount'], $data['date'], $data['paid_from']);
         return response()->json($advance, 201);
+    }
+
+    public function show(AdvanceSalary $advanceSalary)
+    {
+        return $advanceSalary->load('employee');
     }
 }

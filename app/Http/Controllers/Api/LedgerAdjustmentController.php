@@ -49,4 +49,9 @@ class LedgerAdjustmentController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
     }
+
+    public function show(JournalEntry $ledgerAdjustment)
+    {
+        return $ledgerAdjustment->load('lines.account');
+    }
 }
